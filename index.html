@@ -973,7 +973,7 @@
                     </div>
                     <div>
                         <label class="block text-slate-300 mb-1">MESSAGE / INQUIRY:</label>
-                        <textarea rows="4" name="message" required placeholder="Let's talk. Write your message here." class="w-full bg-slate-950 border border-slate-800 rounded p-3 text-slate-200 focus:border-cyber-cyan focus:outline-none"></textarea>
+                        <textarea rows="4" name="message" required placeholder="DiscussLet's talk. Write your message here." class="w-full bg-slate-950 border border-slate-800 rounded p-3 text-slate-200 focus:border-cyber-cyan focus:outline-none"></textarea>
                     </div>
                     <button type="submit" class="w-full py-3 rounded bg-cyber-cyan text-black font-bold hover:bg-white transition-all shadow-neon-cyan">
                         SEND MESSAGE
@@ -1238,6 +1238,71 @@
             const msgEl = document.getElementById("form-msg");
             const btn = form.querySelector('button[type="submit"]');
             const originalHTML = btn.innerHTML;
+
+            const nameInput = form.querySelector('input[name="name"]');
+            const nameValue = nameInput.value.trim();
+            const letterCount = (nameValue.match(/\p{L}/gu) || []).length;
+            let nameError = "";
+
+            if (nameValue.length < 2 || nameValue.length > 60) {
+                nameError = "Name or organization must be 2 to 60 characters";
+            } else if (!/^[\p{L}\p{N}\s.,'&()\/-]+$/u.test(nameValue)) {
+                nameError = "Name or organization contains invalid characters";
+            } else if (letterCount < 2) {
+                nameError = "Enter a valid name or organization, not just numbers";
+            } else if (/^(.)\1+$/u.test(nameValue.replace(/\s/g, ""))) {
+                nameError = "Enter a real name or organization";
+            }
+
+            if (nameError) {
+                msgEl.className = "text-center font-mono text-xs pt-2 block";
+                msgEl.style.color = "#f87171";
+                msgEl.textContent = "✗ " + nameError;
+                nameInput.focus();
+                return;
+            }
+
+            const email = form.querySelector('input[name="email"]').value.trim().toLowerCase();
+            const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
+            const typoFixes = {
+                "gmial.com": "gmail.com", "gamil.com": "gmail.com", "gmai.com": "gmail.com",
+                "gmil.com": "gmail.com", "gmal.com": "gmail.com", "gmaill.com": "gmail.com",
+                "gmaail.com": "gmail.com", "gmmail.com": "gmail.com", "ggmail.com": "gmail.com",
+                "gnail.com": "gmail.com", "gmsil.com": "gmail.com", "gmqil.com": "gmail.com",
+                "gmali.com": "gmail.com", "gmaiil.com": "gmail.com", "gimail.com": "gmail.com",
+                "gmail.con": "gmail.com", "gmail.cm": "gmail.com", "gmail.co": "gmail.com",
+                "gmail.om": "gmail.com", "gmail.vom": "gmail.com", "gmail.cmo": "gmail.com",
+                "gmail.ocm": "gmail.com", "gmail.comm": "gmail.com", "gmail.coom": "gmail.com",
+                "gmail.com.com": "gmail.com", "gmail.com.np": "gmail.com", "gmail.np": "gmail.com",
+                "outlok.com": "outlook.com", "otlook.com": "outlook.com", "outook.com": "outlook.com",
+                "oulook.com": "outlook.com", "outllook.com": "outlook.com", "outloook.com": "outlook.com",
+                "outlookk.com": "outlook.com", "outlool.com": "outlook.com", "outlock.com": "outlook.com",
+                "outlook.con": "outlook.com", "outlook.cm": "outlook.com", "outlook.co": "outlook.com",
+                "outlook.om": "outlook.com", "outlook.vom": "outlook.com", "outlook.comm": "outlook.com",
+                "outlook.com.com": "outlook.com", "outlook.com.np": "outlook.com"
+            };
+            let emailError = "";
+
+            if (!emailPattern.test(email)) {
+                emailError = "Enter a valid email address, like name@gmail.com";
+            } else {
+                const parts = email.split("@");
+                const local = parts[0].split("+")[0];
+                const domain = parts[1];
+                if (typoFixes[domain]) {
+                    emailError = "Did you mean " + parts[0] + "@" + typoFixes[domain] + "?";
+                } else if (domain === "gmail.com" &&
+                    (!/^[a-z0-9.]{6,30}$/.test(local) || local.startsWith(".") || local.endsWith(".") || local.includes(".."))) {
+                    emailError = "That doesn't look like a valid Gmail address";
+                }
+            }
+
+            if (emailError) {
+                msgEl.className = "text-center font-mono text-xs pt-2 block";
+                msgEl.style.color = "#f87171";
+                msgEl.textContent = "✗ " + emailError;
+                return;
+            }
 
             btn.disabled = true;
             btn.textContent = "SENDING...";
